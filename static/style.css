@@ -1,0 +1,129 @@
+body { 
+    font-family: 'Consolas', 'Courier New', monospace; /* Monospace font */
+    background-color: #000000; /* Pure black background */
+    color: #00ff41; /* Neon green text */
+    margin: 0; 
+    padding: 20px;
+    text-align: center; 
+}
+
+/* CONTAINER (The "Terminal Window") */
+.container { 
+    max-width: 800px; 
+    margin: auto; 
+    background: rgba(0, 50, 0, 0.1); /* Dark green, slightly transparent background */
+    padding: 30px; 
+    border-radius: 5px; 
+    box-shadow: 0 0 15px rgba(0, 255, 65, 0.7); /* Neon green glowing border effect */
+    border: 1px solid #009933; /* A slight green border */
+}
+
+/* HEADERS */
+h1, h2, h3 { 
+    color: #33ff66; /* Brighter neon green for titles */
+    text-shadow: 0 0 5px #00ff41; /* Text glow */
+    border-bottom: 1px solid rgba(0, 255, 65, 0.2);
+    padding-bottom: 5px;
+    margin-top: 20px;
+}
+
+p {
+    color: #00cc33;
+}
+
+/* STAT BOXES (The Data Lines) */
+.stat-box { 
+    background: rgba(0, 50, 0, 0.2); /* Slightly darker background for stats */
+    margin: 6px 0; 
+    padding: 10px 15px; 
+    border-radius: 3px; 
+    text-align: left; 
+    border-left: 5px solid #009933;
+}
+
+.stat-label { 
+    font-weight: bold; 
+    color: #00ff41; 
+    display: inline-block; 
+    width: 50%; /* Adjusted width for better alignment in monospace */
+}
+
+.stat-value { 
+    float: right; 
+    color: #99ffbb; /* Lighter color for values */
+    font-weight: bold;
+}
+
+/* SECURITY STATUS (ARP Detection) */
+#arp-status {
+    border-left: 5px solid #00ff41; /* Default green for Secure */
+}
+
+/* Device List */
+#devices-list { 
+    text-align: left; 
+    margin-top: 15px; 
+    border-top: 1px dashed rgba(0, 255, 65, 0.2); /* Dashed separator */
+    padding-top: 10px; 
+}
+
+.device-entry { 
+    margin-bottom: 5px; 
+    font-size: 0.9em; 
+    color: #00cc33;
+}
+
+/* PROTOCOL ANALYSIS SECTION */
+.analysis-button {
+    background-color: #33ff66; /* Bright green button */
+    color: #000000; /* Black text on button */
+    padding: 10px 15px;
+    border: none;
+    border-radius: 3px;
+    font-size: 1em;
+    cursor: pointer;
+    margin-top: 10px;
+    font-weight: bold;
+    box-shadow: 0 0 8px #33ff66;
+    transition: background-color 0.2s;
+}
+
+.analysis-button:hover:not(:disabled) {
+    background-color: #00e64d; /* Slightly darker green on hover */
+}
+
+.analysis-button:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+    box-shadow: none;
+}
+
+.results-box {
+    margin-top: 15px;
+    padding: 10px;
+    border: 1px solid #009933;
+    border-radius: 3px;
+    background-color: rgba(0, 50, 0, 0.2);
+    text-align: left;
+}
+
+.results-box ul {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+}
+
+.results-box ul li {
+    padding: 3px 0;
+    border-bottom: 1px dotted rgba(0, 255, 65, 0.1);
+}
+
+.loading {
+    color: #ffcc00; /* Yellow for loading/wait state */
+    font-weight: bold;
+}
+
+.error {
+    color: #ff3333; /* Red for errors/failures */
+    font-weight: bold;
+}

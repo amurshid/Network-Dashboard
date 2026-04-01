@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Internet in a Box Dashboard // INTRUSION_DETECT</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>// INTRUSION DETECT SYSTEM ONLINE //</h1>
+        <p>[ System_Metrics_Polling: 2000ms ] </p>
+        
+        <h2>// SECURITY STATUS //</h2>
+        <div id="arp-status" class="stat-box"><span class="stat-label">ARP Integrity:</span> <span class="stat-value">Secure</span></div>
+
+        <div class="card" id="protocol-analysis-card">
+            <h3>Live Protocol Analysis</h3>
+            <p>*** Execute sniff on wlan0 for 3 seconds ***</p>
+            <button class="analysis-button" onclick="runProtocolAnalysis()">
+                Run Traffic Analysis
+            </button>
+            <div id="protocol-results" class="results-box">
+                <p>Click the button to start analysis...</p>
+            </div>
+        </div>
+        <h2>// PI SYSTEM METRICS //</h2>
+        <div id="cpu" class="stat-box"><span class="stat-label">CPU Usage:</span> <span class="stat-value">--</span></div>
+        <div id="temperature" class="stat-box"><span class="stat-label">CPU Temperature:</span> <span class="stat-value">--</span></div>
+        <div id="memory" class="stat-box"><span class="stat-label">Memory Used:</span> <span class="stat-value">--</span></div>
+        <div id="disk" class="stat-box"><span class="stat-label">Disk Used:</span> <span class="stat-value">--</span></div>
+        <div id="uptime" class="stat-box"><span class="stat-label">System Uptime:</span> <span class="stat-value">--</span></div>
+        <div id="latency" class="stat-box"><span class="stat-label">Network Latency (Pi Loopback):</span> <span class="stat-value">--</span></div>
+        
+        <h2>// NETWORK UTILIZATION (KB/s) //</h2>
+        <div id="download" class="stat-box"><span class="stat-label">Download Speed:</span> <span class="stat-value">--</span></div>
+        <div id="upload" class="stat-box"><span class="stat-label">Upload Speed:</span> <span class="stat-value">--</span></div>
+
+        <h2>// CONNECTED CLIENTS (<span id="device-count">--</span>) //</h2>
+        <div id="devices-list">
+            Loading devices...
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            updateDashboard(); 
+            setInterval(updateDashboard, 2000); 
+        });
+
+        // The main function to fetch system metrics
+        function updateDashboard() {
+            fetch('/data')
+                .then(response => response.json())
+                .then(data => {
+                    // 1. SYSTEM METRICS
+                    document.getElementById('cpu').querySelector('.stat-value').textContent = data.cpu_percent.toFixed(1) + '%';
+                    document.getElementById('temperature').querySelector('.stat-value').textContent = data.cpu_temp;
+                    document.getElementById('memory').querySelector('.stat-value').textContent = data.mem_percent.toFixed(1) + '%';
+                    document.getElementById('disk').querySelector('.stat-value').textContent = data.disk_percent.toFixed(1) + '%';
+                    document.getElementById('uptime').querySelector('.stat-value').textContent = data.uptime;
+                    document.getElementById('latency').querySelector('.stat-value').textContent = data.latency;
+                    
+                    // --- ARP Status Update ---
+                    const arpStatusDiv = document.getElementById('arp-status');
+                    arpStatusDiv.querySelector('.stat-value').textContent = data.arp_status;
+
+                    // 2. NETWORK SPEED
+                    document.getElementById('download').querySelector('.stat-value').textContent = data.download_speed.toFixed(2) + ' KB/s';
+                    document.getElementById('upload').querySelector('.stat-value').textContent = data.upload_speed.toFixed(2) + ' KB/s';
+
+                    // 3. CONNECTED DEVICES
+                    document.getElementById('device-count').textContent = data.connected_devices;
+                    const deviceListDiv = document.getElementById('devices-list');
+                    deviceListDiv.innerHTML = ''; 
+                    
+                    if (data.devices.length === 0) {
+                        deviceListDiv.textContent = '>> No client devices detected. Connection: UNSECURED';
+                    } else {
+                        data.devices.forEach(device => {
+                            const entry = document.createElement('div');
+                            entry.className = 'device-entry';
+                            entry.textContent = `[ CLIENT ] >> IP: ${device.ip} | MAC: ${device.mac}`;
+                            deviceListDiv.appendChild(entry);
+                        });
+                    }
+                })
+        }
+        
+        // FUNCTION TO HANDLE THE PROTOCOL ANALYSIS BUTTON CLICK (RESTORED)
+        function runProtocolAnalysis() {
+            const resultsDiv = document.getElementById('protocol-results');
+            resultsDiv.innerHTML = '<p>Analysing traffic... Please wait ...</p>';
+
+            fetch('/protocol_analysis')
+                .then(response => response.json())
+                .then(data => {
+                    resultsDiv.innerHTML = '';
+                    
+                    // Display the results returned by the function
+                    for (const [key, value] of Object.entries(data)) {
+                        const p = document.createElement('p');
+                        p.textContent = `[ ${key} ] : ${value}`;
+                        resultsDiv.appendChild(p);
+                    }
+                })
+                .catch(error => {
+                    resultsDiv.innerHTML = '<p style="color:red;">Error: Could not connect to analysis route.</p>';
+                    console.error('Error fetching protocol analysis:', error);
+                });
+        }
+    </script>
+</body>
+</html>
