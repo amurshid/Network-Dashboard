@@ -2,112 +2,274 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Internet in a Box Dashboard // INTRUSION_DETECT</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NetWatch — Network Monitoring Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="{{ url_for('static', filename='js/charts.js') }}" defer></script>
+    <script src="{{ url_for('static', filename='js/dashboard.js') }}" defer></script>
+    <script src="{{ url_for('static', filename='js/analysis.js') }}" defer></script>
 </head>
 <body>
-    <div class="container">
-        <h1>// INTRUSION DETECT SYSTEM ONLINE //</h1>
-        <p>[ System_Metrics_Polling: 2000ms ] </p>
-        
-        <h2>// SECURITY STATUS //</h2>
-        <div id="arp-status" class="stat-box"><span class="stat-label">ARP Integrity:</span> <span class="stat-value">Secure</span></div>
+<div class="app">
 
-        <div class="card" id="protocol-analysis-card">
-            <h3>Live Protocol Analysis</h3>
-            <p>*** Execute sniff on wlan0 for 3 seconds ***</p>
-            <button class="analysis-button" onclick="runProtocolAnalysis()">
-                Run Traffic Analysis
-            </button>
-            <div id="protocol-results" class="results-box">
-                <p>Click the button to start analysis...</p>
+    <!-- ═══ HEADER ═══ -->
+    <header class="header">
+        <div class="header-brand">
+            <div class="brand-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="5" r="2"/><circle cx="5" cy="19" r="2"/><circle cx="19" cy="19" r="2"/>
+                    <line x1="12" y1="7" x2="5" y2="17"/><line x1="12" y1="7" x2="19" y2="17"/><line x1="5" y1="19" x2="19" y2="19"/>
+                </svg>
+            </div>
+            <div>
+                <h1 class="brand-name">NetWatch</h1>
+                <p class="brand-sub">Raspberry Pi Network Monitor</p>
             </div>
         </div>
-        <h2>// PI SYSTEM METRICS //</h2>
-        <div id="cpu" class="stat-box"><span class="stat-label">CPU Usage:</span> <span class="stat-value">--</span></div>
-        <div id="temperature" class="stat-box"><span class="stat-label">CPU Temperature:</span> <span class="stat-value">--</span></div>
-        <div id="memory" class="stat-box"><span class="stat-label">Memory Used:</span> <span class="stat-value">--</span></div>
-        <div id="disk" class="stat-box"><span class="stat-label">Disk Used:</span> <span class="stat-value">--</span></div>
-        <div id="uptime" class="stat-box"><span class="stat-label">System Uptime:</span> <span class="stat-value">--</span></div>
-        <div id="latency" class="stat-box"><span class="stat-label">Network Latency (Pi Loopback):</span> <span class="stat-value">--</span></div>
-        
-        <h2>// NETWORK UTILIZATION (KB/s) //</h2>
-        <div id="download" class="stat-box"><span class="stat-label">Download Speed:</span> <span class="stat-value">--</span></div>
-        <div id="upload" class="stat-box"><span class="stat-label">Upload Speed:</span> <span class="stat-value">--</span></div>
-
-        <h2>// CONNECTED CLIENTS (<span id="device-count">--</span>) //</h2>
-        <div id="devices-list">
-            Loading devices...
+        <div class="header-meta">
+            <div class="live-badge">
+                <span class="pulse"></span>
+                <span>Live</span>
+            </div>
+            <div class="divider-v"></div>
+            <div class="meta-item">
+                <span class="meta-label">Uptime</span>
+                <span class="meta-val mono" id="uptime">--h --m --s</span>
+            </div>
+            <div class="divider-v"></div>
+            <div class="meta-item">
+                <span class="meta-label">Last Update</span>
+                <span class="meta-val mono" id="last-updated">--:--:--</span>
+            </div>
         </div>
-    </div>
+    </header>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            updateDashboard(); 
-            setInterval(updateDashboard, 2000); 
-        });
+    <main class="main">
 
-        // The main function to fetch system metrics
-        function updateDashboard() {
-            fetch('/data')
-                .then(response => response.json())
-                .then(data => {
-                    // 1. SYSTEM METRICS
-                    document.getElementById('cpu').querySelector('.stat-value').textContent = data.cpu_percent.toFixed(1) + '%';
-                    document.getElementById('temperature').querySelector('.stat-value').textContent = data.cpu_temp;
-                    document.getElementById('memory').querySelector('.stat-value').textContent = data.mem_percent.toFixed(1) + '%';
-                    document.getElementById('disk').querySelector('.stat-value').textContent = data.disk_percent.toFixed(1) + '%';
-                    document.getElementById('uptime').querySelector('.stat-value').textContent = data.uptime;
-                    document.getElementById('latency').querySelector('.stat-value').textContent = data.latency;
-                    
-                    // --- ARP Status Update ---
-                    const arpStatusDiv = document.getElementById('arp-status');
-                    arpStatusDiv.querySelector('.stat-value').textContent = data.arp_status;
+        <!-- ═══ METRIC CARDS ═══ -->
+        <div class="metrics-grid">
 
-                    // 2. NETWORK SPEED
-                    document.getElementById('download').querySelector('.stat-value').textContent = data.download_speed.toFixed(2) + ' KB/s';
-                    document.getElementById('upload').querySelector('.stat-value').textContent = data.upload_speed.toFixed(2) + ' KB/s';
+            <div class="metric-card">
+                <div class="mc-top">
+                    <div class="mc-icon blue">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/>
+                            <line x1="9" y1="2" x2="9" y2="4"/><line x1="15" y1="2" x2="15" y2="4"/>
+                            <line x1="9" y1="20" x2="9" y2="22"/><line x1="15" y1="20" x2="15" y2="22"/>
+                            <line x1="2" y1="9" x2="4" y2="9"/><line x1="2" y1="15" x2="4" y2="15"/>
+                            <line x1="20" y1="9" x2="22" y2="9"/><line x1="20" y1="15" x2="22" y2="15"/>
+                        </svg>
+                    </div>
+                    <span class="mc-label">CPU Usage</span>
+                </div>
+                <div class="mc-value-row">
+                    <span class="mc-value mono" id="cpu-val">--</span>
+                    <span class="mc-unit">%</span>
+                </div>
+                <div class="mc-bar-track"><div class="mc-bar-fill" id="cpu-bar"></div></div>
+            </div>
 
-                    // 3. CONNECTED DEVICES
-                    document.getElementById('device-count').textContent = data.connected_devices;
-                    const deviceListDiv = document.getElementById('devices-list');
-                    deviceListDiv.innerHTML = ''; 
-                    
-                    if (data.devices.length === 0) {
-                        deviceListDiv.textContent = '>> No client devices detected. Connection: UNSECURED';
-                    } else {
-                        data.devices.forEach(device => {
-                            const entry = document.createElement('div');
-                            entry.className = 'device-entry';
-                            entry.textContent = `[ CLIENT ] >> IP: ${device.ip} | MAC: ${device.mac}`;
-                            deviceListDiv.appendChild(entry);
-                        });
-                    }
-                })
-        }
-        
-        // FUNCTION TO HANDLE THE PROTOCOL ANALYSIS BUTTON CLICK (RESTORED)
-        function runProtocolAnalysis() {
-            const resultsDiv = document.getElementById('protocol-results');
-            resultsDiv.innerHTML = '<p>Analysing traffic... Please wait ...</p>';
+            <div class="metric-card">
+                <div class="mc-top">
+                    <div class="mc-icon purple">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="5" y1="2" x2="19" y2="2"/><line x1="5" y1="22" x2="19" y2="22"/>
+                            <line x1="5" y1="2" x2="5" y2="22"/><line x1="19" y1="2" x2="19" y2="22"/>
+                            <rect x="9" y="7" width="6" height="4" rx="1"/>
+                            <rect x="9" y="13" width="6" height="4" rx="1"/>
+                        </svg>
+                    </div>
+                    <span class="mc-label">Memory</span>
+                </div>
+                <div class="mc-value-row">
+                    <span class="mc-value mono" id="mem-val">--</span>
+                    <span class="mc-unit">%</span>
+                </div>
+                <div class="mc-bar-track"><div class="mc-bar-fill" id="mem-bar"></div></div>
+            </div>
 
-            fetch('/protocol_analysis')
-                .then(response => response.json())
-                .then(data => {
-                    resultsDiv.innerHTML = '';
-                    
-                    // Display the results returned by the function
-                    for (const [key, value] of Object.entries(data)) {
-                        const p = document.createElement('p');
-                        p.textContent = `[ ${key} ] : ${value}`;
-                        resultsDiv.appendChild(p);
-                    }
-                })
-                .catch(error => {
-                    resultsDiv.innerHTML = '<p style="color:red;">Error: Could not connect to analysis route.</p>';
-                    console.error('Error fetching protocol analysis:', error);
-                });
-        }
-    </script>
+            <div class="metric-card">
+                <div class="mc-top">
+                    <div class="mc-icon yellow">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <ellipse cx="12" cy="5" rx="9" ry="3"/>
+                            <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/>
+                            <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/>
+                        </svg>
+                    </div>
+                    <span class="mc-label">Disk Usage</span>
+                </div>
+                <div class="mc-value-row">
+                    <span class="mc-value mono" id="disk-val">--</span>
+                    <span class="mc-unit">%</span>
+                </div>
+                <div class="mc-bar-track"><div class="mc-bar-fill" id="disk-bar"></div></div>
+            </div>
+
+            <div class="metric-card">
+                <div class="mc-top">
+                    <div class="mc-icon orange">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z"/>
+                        </svg>
+                    </div>
+                    <span class="mc-label">Temperature</span>
+                </div>
+                <div class="mc-value-row">
+                    <span class="mc-value mono" id="temp-val">--</span>
+                    <span class="mc-unit">°C</span>
+                </div>
+                <div class="mc-bar-track"><div class="mc-bar-fill" id="temp-bar"></div></div>
+            </div>
+
+            <div class="metric-card">
+                <div class="mc-top">
+                    <div class="mc-icon green">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+                        </svg>
+                    </div>
+                    <span class="mc-label">Latency</span>
+                </div>
+                <div class="mc-value-row">
+                    <span class="mc-value mono" id="latency-val">--</span>
+                    <span class="mc-unit" id="latency-unit">ms</span>
+                </div>
+                <div class="mc-bar-track"><div class="mc-bar-fill" id="latency-bar"></div></div>
+            </div>
+
+            <div class="metric-card" id="arp-card">
+                <div class="mc-top">
+                    <div class="mc-icon green" id="arp-icon">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                        </svg>
+                    </div>
+                    <span class="mc-label">ARP Security</span>
+                </div>
+                <div class="mc-value-row">
+                    <span class="mc-value" id="arp-state" style="font-size:1.25rem">--</span>
+                </div>
+                <div class="arp-sub">
+                    <span class="arp-dot" id="arp-dot"></span>
+                    <span class="arp-detail mono" id="arp-detail">Checking...</span>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- ═══ CHARTS ═══ -->
+        <div class="charts-grid">
+
+            <div class="chart-card">
+                <div class="chart-head">
+                    <div>
+                        <h3 class="chart-title">Network Traffic</h3>
+                        <p class="chart-sub">Real-time throughput (KB/s)</p>
+                    </div>
+                    <div class="chart-legend">
+                        <div class="legend-item"><span class="ldot blue-dot"></span><span>Download</span></div>
+                        <div class="legend-item"><span class="ldot green-dot"></span><span>Upload</span></div>
+                    </div>
+                </div>
+                <div class="chart-stats">
+                    <div class="chart-stat">
+                        <span class="cs-label">↓ Download</span>
+                        <span class="cs-val blue-text mono" id="dl-val">-- KB/s</span>
+                    </div>
+                    <div class="chart-stat">
+                        <span class="cs-label">↑ Upload</span>
+                        <span class="cs-val green-text mono" id="ul-val">-- KB/s</span>
+                    </div>
+                </div>
+                <div class="chart-wrap"><canvas id="net-chart"></canvas></div>
+            </div>
+
+            <div class="chart-card">
+                <div class="chart-head">
+                    <div>
+                        <h3 class="chart-title">System Load</h3>
+                        <p class="chart-sub">CPU &amp; Memory utilization (%)</p>
+                    </div>
+                    <div class="chart-legend">
+                        <div class="legend-item"><span class="ldot blue-dot"></span><span>CPU</span></div>
+                        <div class="legend-item"><span class="ldot purple-dot"></span><span>Memory</span></div>
+                    </div>
+                </div>
+                <div class="chart-stats">
+                    <div class="chart-stat">
+                        <span class="cs-label">CPU</span>
+                        <span class="cs-val blue-text mono" id="cpu-chart-val">--%</span>
+                    </div>
+                    <div class="chart-stat">
+                        <span class="cs-label">Memory</span>
+                        <span class="cs-val purple-text mono" id="mem-chart-val">--%</span>
+                    </div>
+                </div>
+                <div class="chart-wrap"><canvas id="sys-chart"></canvas></div>
+            </div>
+
+        </div>
+
+        <!-- ═══ BOTTOM ROW ═══ -->
+        <div class="bottom-grid">
+
+            <!-- Connected Devices Table -->
+            <div class="panel">
+                <div class="panel-head">
+                    <div>
+                        <h3 class="panel-title">Connected Devices</h3>
+                        <p class="panel-sub">Active clients on wlan0</p>
+                    </div>
+                    <span class="count-badge" id="device-badge">0 devices</span>
+                </div>
+                <div class="table-wrap">
+                    <table class="dev-table">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>IP Address</th>
+                                <th>MAC Address</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="devices-body">
+                            <tr class="empty-row"><td colspan="4">No devices detected</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Protocol Analysis Panel -->
+            <div class="panel analysis-panel">
+                <div class="panel-head">
+                    <div>
+                        <h3 class="panel-title">Protocol Analysis</h3>
+                        <p class="panel-sub">IDS traffic inspection on wlan0</p>
+                    </div>
+                    <button class="run-btn" onclick="runProtocolAnalysis()">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                            <polygon points="5 3 19 12 5 21 5 3"/>
+                        </svg>
+                        Analyze
+                    </button>
+                </div>
+                <div class="analysis-body" id="analysis-body">
+                    <div class="analysis-empty">
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                        </svg>
+                        <p>Click Analyze to inspect traffic</p>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+</div>
+
 </body>
 </html>
