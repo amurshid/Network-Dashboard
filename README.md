@@ -48,11 +48,13 @@ python app.py
 
 Then open `http://<Pi-IP>:5000` in a browser on your local network.
 
-> The Pi must be configured as a wireless access point with `wlan0` for client enumeration and ARP monitoring to work.
+> **The Pi must be acting as a wireless access point (hotspot), not as a client connected to another network.** ARP monitoring, client enumeration, and protocol analysis all depend on `wlan0` being the interface that other devices connect *through* — they will not work if the Pi is itself connecting to an external router.
 
 ## Protocol Analysis (Optional)
 
 The Analyze button calls a companion IDS microservice expected at `http://localhost:5001/analyze`. Run `ids_service.py` separately on port 5001 to enable it. Without it, the panel will show a service offline message.
+
+> Protocol analysis and connected client data will only populate when the Pi is in access point mode with active clients connected to it.
 
 ## API
 
